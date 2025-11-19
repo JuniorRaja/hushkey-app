@@ -1,8 +1,5 @@
-import { ready as sodiumReady, crypto_secretbox_easy, crypto_secretbox_open_easy, crypto_pwhash, crypto_kx_keypair, crypto_kx_client_session_keys, crypto_kx_server_session_keys, crypto_box_easy, crypto_box_open_easy, crypto_sign_keypair, randombytes_buf, crypto_generichash } from 'libsodium-wrappers';
-
 class EncryptionService {
   private static instance: EncryptionService;
-  private sodium: any = null;
 
   private constructor() {}
 
@@ -14,77 +11,96 @@ class EncryptionService {
   }
 
   async initialize(): Promise<void> {
-    await sodiumReady;
-    this.sodium = {
-      crypto_secretbox_easy,
-      crypto_secretbox_open_easy,
-      crypto_pwhash,
-      crypto_kx_keypair,
-      crypto_kx_client_session_keys,
-      crypto_kx_server_session_keys,
-      crypto_box_easy,
-      crypto_box_open_easy,
-      crypto_sign_keypair,
-      randombytes_buf,
-      crypto_generichash,
-    };
+    // No initialization needed for Web Crypto API
   }
 
-  // Key derivation using Argon2id
+  // Key derivation using PBKDF2
   async deriveMasterKey(password: string, salt: Uint8Array): Promise<Uint8Array> {
-    if (!this.sodium) await this.initialize();
-
-    const keyLength = 32; // 256 bits
-    const opsLimit = this.sodium.crypto_pwhash.OPSLIMIT_SENSITIVE;
-    const memLimit = this.sodium.crypto_pwhash.MEMLIMIT_SENSITIVE;
-    const algorithm = this.sodium.crypto_pwhash.ALG_ARGON2ID13;
-
-    return this.sodium.crypto_pwhash(
-      keyLength,
-      password,
-      salt,
-      opsLimit,
-      memLimit,
-      algorithm
+    const passwordBytes = new TextEncoder().encode(password);
+    const keyMaterial = await crypto.subtle.importKey(
+      'raw',
+      passwordBytes,
+      'PBKDF2',
+      false,
+      ['deriveBits']
     );
+
+    const derivedBits = await crypto.subtle.deriveBits(
+      {
+        name: 'PBKDF2',
+        salt: salt,
+        iterations: 600000,
+        hash: 'SHA-256'
+      },
+      keyMaterial,
+      256
+    );
+
+    return new Uint8Array(derivedBits);
   }
 
   // Derive PIN key
   async derivePinKey(pin: string, userId: string): Promise<string> {
-    if (!this.sodium) await this.initialize();
-
     const combinedInput = `${pin}:${userId}`;
-    return this.sodium.crypto_generichash(32, combinedInput).toString();
+    const inputBytes = new TextEncoder().encode(combinedInput);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', inputBytes);
+    return Array.from(new Uint8Array(hashBuffer))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
   }
 
-  // Encrypt data using AES-256-GCM equivalent with libsodium
+  // Encrypt data using AES-256-GCM
   async encrypt(data: string, key: Uint8Array): Promise<string> {
-    if (!this.sodium) await this.initialize();
+    const iv = this.generateNonce();
+    const dataBytes = new TextEncoder().encode(data);
+    
+    const cryptoKey = await crypto.subtle.importKey(
+      'raw',
+      key,
+      'AES-GCM',
+      false,
+      ['encrypt']
+    );
 
-    const nonce = this.generateNonce();
-    const ciphertext = this.sodium.crypto_secretbox_easy(data, nonce, key);
-    const result = new Uint8Array(nonce.length + ciphertext.length);
-    result.set(nonce);
-    result.set(ciphertext, nonce.length);
+    const ciphertext = await crypto.subtle.encrypt(
+      { name: 'AES-GCM', iv: iv },
+      cryptoKey,
+      dataBytes
+    );
+
+    const result = new Uint8Array(iv.length + ciphertext.byteLength);
+    result.set(iv);
+    result.set(new Uint8Array(ciphertext), iv.length);
 
     return this.toBase64(result);
   }
 
   // Decrypt data
   async decrypt(encryptedData: string, key: Uint8Array): Promise<string> {
-    if (!this.sodium) await this.initialize();
-
     const cipherBytes = this.fromBase64(encryptedData);
-    const nonce = cipherBytes.slice(0, 24); // libsodium nonce size
-    const ciphertext = cipherBytes.slice(24);
+    const iv = cipherBytes.slice(0, 12);
+    const ciphertext = cipherBytes.slice(12);
 
-    return this.sodium.crypto_secretbox_open_easy(ciphertext, nonce, key);
+    const cryptoKey = await crypto.subtle.importKey(
+      'raw',
+      key,
+      'AES-GCM',
+      false,
+      ['decrypt']
+    );
+
+    const decrypted = await crypto.subtle.decrypt(
+      { name: 'AES-GCM', iv: iv },
+      cryptoKey,
+      ciphertext
+    );
+
+    return new TextDecoder().decode(decrypted);
   }
 
   // Generate a random salt
   generateSalt(length: number = 16): Uint8Array {
-    if (!this.sodium) return randombytes_buf(length);
-    return this.sodium.randombytes_buf(length);
+    return crypto.getRandomValues(new Uint8Array(length));
   }
 
   // Generate a random key
@@ -94,13 +110,18 @@ class EncryptionService {
 
   // Generate a random string (for IDs)
   generateRandomString(length: number = 32): string {
-    if (!this.sodium) return randombytes_buf(length).toString();
-    return this.sodium.randombytes_buf(length).toString();
+    const bytes = this.generateSalt(length);
+    return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  // Generate UUID v4
+  generateUUID(): string {
+    return crypto.randomUUID();
   }
 
   // Generate nonce for encryption
   generateNonce(): Uint8Array {
-    return this.generateSalt(24); // libsodium nonce size
+    return this.generateSalt(12); // AES-GCM IV size
   }
 
   // Utility methods for base64 encoding
@@ -119,18 +140,30 @@ class EncryptionService {
 
   // Generate asymmetric keypair for secure sharing
   async generateKeypair(): Promise<{ publicKey: Uint8Array; privateKey: Uint8Array }> {
-    if (!this.sodium) await this.initialize();
-    return this.sodium.crypto_kx_keypair();
+    const keypair = await crypto.subtle.generateKey(
+      {
+        name: 'ECDH',
+        namedCurve: 'P-256'
+      },
+      true,
+      ['deriveBits']
+    );
+
+    const publicKey = await crypto.subtle.exportKey('raw', keypair.publicKey);
+    const privateKey = await crypto.subtle.exportKey('pkcs8', keypair.privateKey);
+
+    return {
+      publicKey: new Uint8Array(publicKey),
+      privateKey: new Uint8Array(privateKey)
+    };
   }
 
   // TOTP related (for later phase)
-  generateTOTP(secret: string, timeStep: number = 30, digits: number = 6): string {
+  async generateTOTP(secret: string, timeStep: number = 30, digits: number = 6): Promise<string> {
     const epoch = Math.floor(Date.now() / 1000);
     const timeWindow = Math.floor(epoch / timeStep);
 
-    // HMAC-SHA1 calculation would go here
-    // For now, simplified implementation
-    const hmac = this.simpleHMAC(secret, timeWindow.toString());
+    const hmac = await this.simpleHMAC(secret, timeWindow.toString());
     const offset = hmac[hmac.length - 1] & 0xf;
     const code = (hmac[offset] & 0x7f) << 24 |
                 (hmac[offset + 1] & 0xff) << 16 |
@@ -140,21 +173,20 @@ class EncryptionService {
     return (code % Math.pow(10, digits)).toString().padStart(digits, '0');
   }
 
-  private simpleHMAC(key: string, message: string): number[] {
-    // Simplified HMAC for demonstration - in production use proper crypto
-    // This should use Web Crypto API or libsodium
+  private async simpleHMAC(key: string, message: string): Promise<number[]> {
     const keyBytes = new TextEncoder().encode(key);
     const messageBytes = new TextEncoder().encode(message);
 
-    // Very basic hash combination - NOT secure for production!
-    const combined = new Uint8Array(keyBytes.length + messageBytes.length);
-    combined.set(keyBytes);
-    combined.set(messageBytes, keyBytes.length);
+    const cryptoKey = await crypto.subtle.importKey(
+      'raw',
+      keyBytes,
+      { name: 'HMAC', hash: 'SHA-1' },
+      false,
+      ['sign']
+    );
 
-    const hash = this.sodium ? this.sodium.crypto_generichash(32, combined) :
-                               crypto.getRandomValues(new Uint8Array(32));
-
-    return Array.from(hash);
+    const signature = await crypto.subtle.sign('HMAC', cryptoKey, messageBytes);
+    return Array.from(new Uint8Array(signature));
   }
 }
 

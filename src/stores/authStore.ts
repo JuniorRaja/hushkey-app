@@ -179,6 +179,10 @@ function authActions(set: any, get: () => AppStore): AuthActions {
 
         if (error) throw error;
 
+        if (data.user) {
+          set({ user: { id: data.user.id, email: data.user.email! } });
+        }
+
         await get().unlockVault(password);
       } finally {
         set({ isLoading: false });
@@ -210,13 +214,30 @@ function authActions(set: any, get: () => AppStore): AuthActions {
       if (!get().user) throw new Error('No user logged in');
 
       const userId = get().user!.id;
-      const profile = await DatabaseService.getUserProfile(userId);
-      const salt = profile ? profile.salt : EncryptionService.generateSalt();
+      let profile = await DatabaseService.getUserProfile(userId);
+      let salt: Uint8Array;
+
+      if (!profile) {
+        // Create profile if it doesn't exist
+        salt = EncryptionService.generateSalt();
+        await DatabaseService.saveUserProfile(userId, salt);
+        
+        // Create device if it doesn't exist
+        if (!get().deviceId) {
+          const deviceId = EncryptionService.generateRandomString();
+          await DatabaseService.saveDevice(userId, deviceId);
+          set({ deviceId });
+        }
+      } else {
+        salt = profile.salt;
+      }
 
       const masterKey = await EncryptionService.deriveMasterKey(password, salt);
 
       // Update device last seen
-      await DatabaseService.updateDeviceLastSeen(get().deviceId);
+      if (get().deviceId) {
+        await DatabaseService.updateDeviceLastSeen(get().deviceId);
+      }
 
       set({
         masterKey,

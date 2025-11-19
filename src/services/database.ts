@@ -79,7 +79,7 @@ class DatabaseService {
   // Vault operations
   async createVault(userId: string, name: string, masterKey: Uint8Array): Promise<Vault> {
     const encryptedName = await EncryptionService.encrypt(name, masterKey);
-    const vaultId = EncryptionService.generateRandomString(32);
+    const vaultId = EncryptionService.generateUUID();
 
     const { error } = await supabase
       .from('vaults')
@@ -172,7 +172,7 @@ class DatabaseService {
 
   // Item operations
   async createVaultItem(vaultId: string, itemData: Omit<VaultItem, 'id' | 'vaultId' | 'createdAt' | 'updatedAt'>, masterKey: Uint8Array): Promise<VaultItem> {
-    const itemId = EncryptionService.generateRandomString(32);
+    const itemId = EncryptionService.generateUUID();
 
     // Encrypt the item data as JSON
     const itemJson = JSON.stringify({

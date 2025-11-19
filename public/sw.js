@@ -63,8 +63,12 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // API requests - use network-first strategy for data
+  // API requests - bypass service worker for mutations, use network-first for GET
   if (url.pathname.startsWith('/api/') || url.host.includes('supabase')) {
+    if (request.method !== 'GET') {
+      // Don't cache mutations
+      return;
+    }
     event.respondWith(networkFirstStrategy(request));
     return;
   }
@@ -150,20 +154,21 @@ async function cacheFirstStrategy(request) {
 
 async function networkFirstStrategy(request) {
   try {
-    const response = await fetch(request);
-    if (response.ok) {
+    const response = await fetch(request.clone());
+    if (response.ok && request.method === 'GET') {
       const cache = await caches.open(DATA_CACHE);
       cache.put(request, response.clone());
     }
     return response;
   } catch (error) {
     console.log('[SW] Network request failed, trying cache');
-    const cachedResponse = await caches.match(request);
-    if (cachedResponse) {
-      return cachedResponse;
+    if (request.method === 'GET') {
+      const cachedResponse = await caches.match(request);
+      if (cachedResponse) {
+        return cachedResponse;
+      }
     }
-    // Return offline fallback
-    return new Response('Offline content not available', { status: 503 });
+    throw error;
   }
 }
 
