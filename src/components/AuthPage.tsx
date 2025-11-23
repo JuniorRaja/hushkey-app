@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAppStore } from "../stores/authStore";
 import './AuthPage.css';
+import { ShieldIcon, LockIcon, KeyIcon, EmailIcon } from './FaviconIcon';
 
 const AuthPage = () => {
   const { user, isLoading, signIn, signUp, unlockVault } = useAppStore();
@@ -35,64 +36,146 @@ const AuthPage = () => {
 
   if (user) {
     return (
-      <div className="auth-page">
-        <div className="auth-container">
-          <h1 className="auth-title">Unlock Vault</h1>
-          <p className="auth-subtitle">{user.email}</p>
-          <form onSubmit={handleSubmit}>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your master password"
-              className="auth-input"
-              required
-            />
-            <button type="submit" className="auth-button" disabled={isLoading}>
-              {isLoading ? "Unlocking..." : "Unlock"}
+      <div className="auth-page unlock-page">
+        <div className="auth-bg-pattern">
+          <div className="floating-icon icon-1">
+            <ShieldIcon size={48} />
+          </div>
+          <div className="floating-icon icon-2">
+            <KeyIcon size={48} />
+          </div>
+          <div className="floating-icon icon-3">
+            <LockIcon size={48} />
+          </div>
+        </div>
+        
+        <div className="auth-container unlock-container">
+          <div className="auth-header">
+            <div className="auth-logo">
+              <ShieldIcon size={40} className="logo-icon" />
+            </div>
+            <h1 className="auth-title">Welcome Back</h1>
+            <p className="auth-subtitle">{user.email}</p>
+          </div>
+          
+          <form onSubmit={handleSubmit} className="auth-form">
+            <div className="form-group">
+              <div className="input-wrapper">
+                <LockIcon size={20} className="input-icon" />
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter your master password"
+                  className="auth-input"
+                  required
+                />
+              </div>
+            </div>
+            
+            <button type="submit" className="auth-button unlock-button" disabled={isLoading}>
+              <KeyIcon size={20} className="button-icon" />
+              {isLoading ? "Unlocking..." : "Unlock Vault"}
             </button>
-            {error && <p className="auth-error">{error}</p>}
+            
+            {error && (
+              <div className="auth-error">
+                <span className="error-icon">⚠</span>
+                {error}
+              </div>
+            )}
           </form>
+          
+          <div className="auth-footer">
+            <ShieldIcon size={16} className="footer-icon" />
+            Your data is encrypted and secure
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="auth-page">
-      <div className="auth-container">
-        <h1 className="auth-title">{isLogin ? "Welcome Back" : "Create Account"}</h1>
-        <p className="auth-subtitle">
-          {isLogin ? "Sign in to your HushKey vault" : "A new vault, just for you"}
-        </p>
-        <form onSubmit={handleSubmit}>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email address"
-            className="auth-input"
-            required
-          />
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Master password"
-            className="auth-input"
-            required
-          />
-          <button type="submit" className="auth-button" disabled={isLoading}>
-            {isLoading ? "Loading..." : isLogin ? "Sign In" : "Sign Up"}
+    <div className="auth-page login-page">
+      <div className="auth-bg-pattern">
+        <div className="floating-icon icon-1">
+          <ShieldIcon size={48} />
+        </div>
+        <div className="floating-icon icon-2">
+          <KeyIcon size={48} />
+        </div>
+        <div className="floating-icon icon-3">
+          <LockIcon size={48} />
+        </div>
+        <div className="floating-icon icon-4">
+          <EmailIcon size={48} />
+        </div>
+      </div>
+      
+      <div className="auth-container login-container">
+        <div className="auth-header">
+          <div className="auth-logo">
+            <ShieldIcon size={40} className="logo-icon" />
+          </div>
+          <h1 className="auth-title">{isLogin ? "Welcome Back" : "Create Account"}</h1>
+          <p className="auth-subtitle">
+            {isLogin ? "Sign in to your secure vault" : "Start your secure journey"}
+          </p>
+        </div>
+        
+        <form onSubmit={handleSubmit} className="auth-form">
+          <div className="form-group">
+            <div className="input-wrapper">
+              <EmailIcon size={20} className="input-icon" />
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Email address"
+                className="auth-input"
+                required
+              />
+            </div>
+          </div>
+          
+          <div className="form-group">
+            <div className="input-wrapper">
+              <LockIcon size={20} className="input-icon" />
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Master password"
+                className="auth-input"
+                required
+              />
+            </div>
+          </div>
+          
+          <button type="submit" className="auth-button login-button" disabled={isLoading}>
+            {isLogin ? <KeyIcon size={20} className="button-icon" /> : <ShieldIcon size={20} className="button-icon" />}
+            {isLoading ? "Loading..." : isLogin ? "Sign In" : "Create Vault"}
           </button>
-          {error && <p className="auth-error">{error}</p>}
+          
+          {error && (
+            <div className="auth-error">
+              <span className="error-icon">⚠</span>
+              {error}
+            </div>
+          )}
         </form>
-        <p className="auth-toggle">
-          {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
-          <button onClick={() => setIsLogin(!isLogin)}>
+        
+        <div className="auth-toggle">
+          <span>{isLogin ? "Don't have an account?" : "Already have an account?"}</span>
+          <button onClick={() => setIsLogin(!isLogin)} className="toggle-button">
             {isLogin ? "Sign Up" : "Sign In"}
           </button>
-        </p>
+        </div>
+        
+        <div className="auth-footer">
+          <ShieldIcon size={16} className="footer-icon" />
+          End-to-end encrypted • Zero-knowledge security
+        </div>
       </div>
     </div>
   );

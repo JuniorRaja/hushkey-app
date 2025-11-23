@@ -3,7 +3,7 @@ import { useTheme } from "./ThemeProvider";
 import AuthPage from "./AuthPage";
 import HealthScore from "./HealthScore";
 import VaultList from "./VaultList";
-import BottomNav from "./BottomNav";
+import { ShieldIcon, BellIcon, LoginIcon, CardIcon, IdentityIcon, FilesIcon } from "./FaviconIcon";
 import './Dashboard.css';
 
 const Dashboard = () => {
@@ -31,56 +31,80 @@ const Dashboard = () => {
   return (
     <div className="dashboard-container">
       <header className="dashboard-header">
-        <div className="user-info">
-          <img src={`https://i.pravatar.cc/40?u=${user.id}`} alt="User" className="user-avatar" />
-          <div>
-            <p className="welcome-back">Welcome back,</p>
-            <h1 className="user-name">{user.email}</h1>
-          </div>
+        <div className="header-left">
+          <ShieldIcon size={32} className="app-logo" />
+          <h1 className="app-name">HushKey</h1>
         </div>
-        <div className="header-actions">
-          <button
-            className="theme-toggle"
-            onClick={toggleTheme}
-            aria-label="Toggle theme"
-            title={`Current: ${theme} (${actualTheme})`}
-          >
-            {actualTheme === "dark" ? "🌙" : "☀️"}
-          </button>
-          <button className="notifications-btn">
-            <span role="img" aria-label="notifications">🔔</span>
+        <div className="header-right">
+          <button className="notification-btn">
+            <BellIcon size={20} />
           </button>
         </div>
       </header>
 
       <main className="dashboard-content">
-        <HealthScore score={calculateHealthScore()} />
-        <div className="summary-cards">
-          <div className="card">
-            <h3>{summaryData.total}</h3>
-            <p>Total</p>
+        <div className="dashboard-stats">
+          <div className="score-section">
+            <HealthScore score={calculateHealthScore()} />
           </div>
-          <div className="card">
-            <h3>{summaryData.compromised}</h3>
-            <p>Compromised</p>
-          </div>
-          <div className="card">
-            <h3>{summaryData.weak}</h3>
-            <p>Weak</p>
-          </div>
-          <div className="card">
-            <h3>{summaryData.reused}</h3>
-            <p>Reused</p>
+          <div className="kpi-grid">
+            <div className="kpi-card">
+              <span className="kpi-value">{summaryData.total}</span>
+              <span className="kpi-label">Total Items</span>
+            </div>
+            <div className="kpi-card">
+              <span className="kpi-value">{summaryData.compromised}</span>
+              <span className="kpi-label">Compromised</span>
+            </div>
+            <div className="kpi-card">
+              <span className="kpi-value">{summaryData.weak}</span>
+              <span className="kpi-label">Weak</span>
+            </div>
+            <div className="kpi-card">
+              <span className="kpi-value">{summaryData.reused}</span>
+              <span className="kpi-label">Reused</span>
+            </div>
           </div>
         </div>
-        <div className="top-vault">
-          <h2>Top Vault</h2>
-          <VaultList vaults={vaults.slice(0, 2)} onVaultSelect={(vaultId) => {
+
+        <div className="category-cards">
+          <div className="category-card logins-card">
+            <div className="card-icon">
+              <LoginIcon size={24} />
+            </div>
+            <h3>Logins</h3>
+            <p>{vaults.reduce((acc, v) => acc + v.items.filter(i => i.type === 'login').length, 0)} items</p>
+          </div>
+          <div className="category-card cards-card">
+            <div className="card-icon">
+              <CardIcon size={24} />
+            </div>
+            <h3>Cards</h3>
+            <p>{vaults.reduce((acc, v) => acc + v.items.filter(i => i.type === 'card').length, 0)} items</p>
+          </div>
+          <div className="category-card identity-card">
+            <div className="card-icon">
+              <IdentityIcon size={24} />
+            </div>
+            <h3>Identity</h3>
+            <p>{vaults.reduce((acc, v) => acc + v.items.filter(i => i.type === 'identity').length, 0)} items</p>
+          </div>
+          <div className="category-card files-card">
+            <div className="card-icon">
+              <FilesIcon size={24} />
+            </div>
+            <h3>Files</h3>
+            <p>{vaults.reduce((acc, v) => acc + v.items.filter(i => i.type === 'note').length, 0)} items</p>
+          </div>
+        </div>
+
+        <div className="vaults-section">
+          <h2>Your Vaults</h2>
+          <VaultList vaults={vaults} onVaultSelect={(vaultId) => {
             const { selectVault } = useAppStore.getState();
             selectVault(vaultId);
-            // This is a bit of a hack, ideally we'd have a router
             (document.querySelector('.nav-item[data-page="vault"]') as HTMLButtonElement)?.click();
-          }} simple />
+          }} />
         </div>
       </main>
     </div>
