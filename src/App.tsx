@@ -1,7 +1,8 @@
-import { useEffect } from 'react'
-import Dashboard from './components/Dashboard'
-import PWAService from './services/pwa'
-import './App.css'
+import { useEffect } from "react";
+import { ThemeProvider } from "./components/ThemeProvider";
+import Dashboard from "./components/Dashboard";
+import PWAService from "./services/pwa";
+import "./App.css";
 
 function App() {
   useEffect(() => {
@@ -9,7 +10,11 @@ function App() {
     PWAService.initialize().catch(console.error);
   }, []);
 
-  return <Dashboard />
+  return (
+    <ThemeProvider>
+      <Dashboard />
+    </ThemeProvider>
+  );
 }
 
-export default App
+export default App;

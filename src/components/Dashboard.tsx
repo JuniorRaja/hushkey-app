@@ -1,8 +1,9 @@
-import { useEffect } from 'react';
-import { useAppStore, type User, type Vault } from '../stores/authStore';
-import AuthPage from './AuthPage';
-import VaultList from './VaultList';
-import VaultView from './VaultView';
+import { useEffect } from "react";
+import { useAppStore, type User, type Vault } from "../stores/authStore";
+import { useTheme } from "./ThemeProvider";
+import AuthPage from "./AuthPage";
+import VaultList from "./VaultList";
+import VaultView from "./VaultView";
 
 const Dashboard = () => {
   const {
@@ -20,14 +21,16 @@ const Dashboard = () => {
     ...store
   } = useAppStore();
 
+  const { theme, actualTheme, toggleTheme } = useTheme();
+
   // Track activity for auto-lock and session management
   useEffect(() => {
     const handleActivity = () => updateActivity();
 
     // Add event listeners for activity tracking
-    window.addEventListener('mousedown', handleActivity);
-    window.addEventListener('keydown', handleActivity);
-    window.addEventListener('scroll', handleActivity);
+    window.addEventListener("mousedown", handleActivity);
+    window.addEventListener("keydown", handleActivity);
+    window.addEventListener("scroll", handleActivity);
 
     // Auto-lock timer - check every 30 seconds
     const autoLockInterval = setInterval(() => {
@@ -41,9 +44,9 @@ const Dashboard = () => {
     }, 30000); // Check every 30 seconds
 
     return () => {
-      window.removeEventListener('mousedown', handleActivity);
-      window.removeEventListener('keydown', handleActivity);
-      window.removeEventListener('scroll', handleActivity);
+      window.removeEventListener("mousedown", handleActivity);
+      window.removeEventListener("keydown", handleActivity);
+      window.removeEventListener("scroll", handleActivity);
       clearInterval(autoLockInterval);
     };
   }, [updateActivity, isUnlocked]);
@@ -54,12 +57,12 @@ const Dashboard = () => {
   }, [hydrate]);
 
   const handleCreateVault = async () => {
-    const name = prompt('Enter vault name:');
+    const name = prompt("Enter vault name:");
     if (name) {
       try {
         await createVault(name);
       } catch (error) {
-        alert('Failed to create vault');
+        alert("Failed to create vault");
       }
     }
   };
@@ -73,16 +76,24 @@ const Dashboard = () => {
     return <AuthPage />;
   }
 
-  const currentVault = vaults.find(v => v.id === currentVaultId);
+  const currentVault = vaults.find((v) => v.id === currentVaultId);
 
   return (
     <div className="dashboard">
       <header className="app-header">
         <div className="header-left">
-          <h1>HushKey</h1>
+          <h1>🔐 HushKey</h1>
         </div>
         <div className="header-right">
-          <span>Welcome, {user.email}</span>
+          <span>{user.email}</span>
+          <button
+            className="theme-toggle"
+            onClick={toggleTheme}
+            aria-label="Toggle theme"
+            title={`Current: ${theme} (${actualTheme})`}
+          >
+            {actualTheme === "dark" ? "🌙" : "☀️"}
+          </button>
           <button onClick={handleSignOut}>Sign Out</button>
         </div>
       </header>
@@ -92,7 +103,7 @@ const Dashboard = () => {
           <div className="sidebar-header">
             <h2>Vaults</h2>
             <button className="add-vault-btn" onClick={handleCreateVault}>
-              <span>+</span> New Vault
+              <span>+</span> New
             </button>
           </div>
           <VaultList vaults={vaults} onVaultSelect={selectVault} />
@@ -101,6 +112,7 @@ const Dashboard = () => {
         <main className="main-content">
           {isLoading ? (
             <div className="loading">
+              <div className="loading-spinner"></div>
               <p>Loading your secure vault...</p>
             </div>
           ) : currentVault ? (
@@ -108,14 +120,19 @@ const Dashboard = () => {
           ) : (
             <div className="welcome">
               <h2>Welcome to HushKey</h2>
-              <p>Select a vault to get started, or create a new one.</p>
+              <p>Your privacy-first password manager</p>
               <div className="welcome-stats">
                 <div className="stat">
                   <strong>{vaults.length}</strong>
                   <span>Vaults</span>
                 </div>
                 <div className="stat">
-                  <strong>{vaults.reduce((total, vault) => total + vault.items.length, 0)}</strong>
+                  <strong>
+                    {vaults.reduce(
+                      (total, vault) => total + vault.items.length,
+                      0
+                    )}
+                  </strong>
                   <span>Total Items</span>
                 </div>
               </div>

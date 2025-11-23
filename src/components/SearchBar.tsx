@@ -1,6 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useAppStore, type Vault } from '../stores/authStore';
-import SearchService, { type SearchFilter, type SearchResult } from '../services/search';
+import { useState, useEffect, useCallback } from "react";
+import { useAppStore, type Vault } from "../stores/authStore";
+import SearchService, {
+  type SearchFilter,
+  type SearchResult,
+} from "../services/search";
 
 interface SearchBarProps {
   onResultsChange: (results: SearchResult[]) => void;
@@ -8,7 +11,7 @@ interface SearchBarProps {
 
 const SearchBar = ({ onResultsChange }: SearchBarProps) => {
   const { vaults } = useAppStore();
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
@@ -62,27 +65,28 @@ const SearchBar = ({ onResultsChange }: SearchBarProps) => {
     if (!showSuggestions || suggestions.length === 0) return;
 
     switch (e.key) {
-      case 'ArrowDown':
+      case "ArrowDown":
         e.preventDefault();
-        setSelectedSuggestionIndex(prev =>
+        setSelectedSuggestionIndex((prev) =>
           prev < suggestions.length - 1 ? prev + 1 : prev
         );
         break;
-      case 'ArrowUp':
+      case "ArrowUp":
         e.preventDefault();
-        setSelectedSuggestionIndex(prev =>
-          prev > 0 ? prev - 1 : -1
-        );
+        setSelectedSuggestionIndex((prev) => (prev > 0 ? prev - 1 : -1));
         break;
-      case 'Enter':
-        if (selectedSuggestionIndex >= 0 && selectedSuggestionIndex < suggestions.length) {
+      case "Enter":
+        if (
+          selectedSuggestionIndex >= 0 &&
+          selectedSuggestionIndex < suggestions.length
+        ) {
           e.preventDefault();
           setQuery(suggestions[selectedSuggestionIndex]);
           setShowSuggestions(false);
           setSelectedSuggestionIndex(-1);
         }
         break;
-      case 'Escape':
+      case "Escape":
         setShowSuggestions(false);
         setSelectedSuggestionIndex(-1);
         break;
@@ -96,7 +100,7 @@ const SearchBar = ({ onResultsChange }: SearchBarProps) => {
   };
 
   const clearSearch = () => {
-    setQuery('');
+    setQuery("");
     setSuggestions([]);
     setShowSuggestions(false);
     onResultsChange([]);
@@ -106,18 +110,24 @@ const SearchBar = ({ onResultsChange }: SearchBarProps) => {
     <div className="search-container">
       <div className="search-bar">
         <div className="search-input-wrapper">
-          <div className="search-icon">🔍</div>
+          <span className="search-icon">🔍</span>
           <input
             type="text"
             placeholder="Search passwords, sites, usernames..."
             value={query}
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
+            onFocus={() =>
+              query.length > 0 &&
+              suggestions.length > 0 &&
+              setShowSuggestions(true)
+            }
+            onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
             className="search-input"
             autoComplete="off"
             spellCheck="false"
           />
-          {isSearching && <div className="search-spinner">⟳</div>}
+          {isSearching && <span className="search-spinner">⟳</span>}
           {query && (
             <button
               onClick={clearSearch}
@@ -135,11 +145,11 @@ const SearchBar = ({ onResultsChange }: SearchBarProps) => {
               <div
                 key={suggestion}
                 className={`suggestion-item ${
-                  index === selectedSuggestionIndex ? 'selected' : ''
+                  index === selectedSuggestionIndex ? "selected" : ""
                 }`}
                 onClick={() => handleSuggestionClick(suggestion)}
               >
-                <span className="suggestion-icon">📝</span>
+                <span className="suggestion-icon">🔍</span>
                 <span className="suggestion-text">{suggestion}</span>
                 <span className="suggestion-tail">↗</span>
               </div>
