@@ -1,0 +1,183 @@
+.vault-view-container {
+  padding: 1rem;
+  background-color: #f0f4f8;
+}
+
+.vault-title {
+  font-size: 1.8rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+}
+
+.filters {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.filter-btn {
+  background-color: #e5e9ec;
+  border: none;
+  border-radius: 20px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.filter-btn.active {
+  background-color: #00A86B;
+  color: white;
+}
+
+.vault-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.vault-list-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background-color: white;
+  padding: 0.8rem;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.vault-list-item.selected {
+  background-color: #e8f5e9;
+}
+
+.item-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+}
+
+.item-summary {
+  flex-grow: 1;
+}
+
+.item-summary h4 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.item-summary p {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.item-type {
+  font-size: 0.8rem;
+  color: #999;
+}
+
+.item-details-view {
+  background-color: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+}
+
+.item-details-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.item-icon-large {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+
+.item-details-header h2 {
+  font-size: 1.4rem;
+  flex-grow: 1;
+}
+
+.close-details-btn {
+  background: none;
+  border: none;
+  font-size: 1.8rem;
+  cursor: pointer;
+}
+
+.item-info-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #f0f4f8;
+}
+
+.info-label {
+  color: #666;
+}
+
+.info-value.url {
+  color: #00A86B;
+  text-decoration: underline;
+}
+
+.item-tags {
+  margin-bottom: 1.5rem;
+}
+
+.tags-container {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.tag {
+  background-color: #e8f5e9;
+  color: #00A86B;
+  padding: 0.3rem 0.8rem;
+  border-radius: 15px;
+  font-size: 0.8rem;
+}
+
+.vulnerability-alert {
+  background-color: #fee2e2;
+  color: #ef4444;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.item-details-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.edit-btn {
+  flex-grow: 1;
+  background-color: #00A86B;
+  color: white;
+  border: none;
+  padding: 0.8rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.delete-btn {
+  background-color: #e5e9ec;
+  border: none;
+  padding: 0.8rem;
+  border-radius: 8px;
+  font-size: 1.2rem;
+  cursor: pointer;
+}

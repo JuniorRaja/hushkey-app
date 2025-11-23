@@ -1,0 +1,69 @@
+.vault-items, .vault-items-simple {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.vault-item, .vault-item-simple {
+  display: flex;
+  align-items: center;
+  padding: 0.8rem;
+  border-radius: 8px;
+  background-color: white;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.vault-item:hover {
+  background-color: #f9f9f9;
+}
+
+.vault-item.active {
+  background-color: #e8f5e9;
+}
+
+.vault-icon {
+  margin-right: 1rem;
+}
+
+.vault-icon img {
+  border-radius: 50%;
+}
+
+.vault-info {
+  flex-grow: 1;
+}
+
+.vault-info h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.vault-info span {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.vault-item-simple {
+  justify-content: space-between;
+}
+
+.vault-info-simple h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.vault-info-simple span {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.login-btn {
+  background-color: #e8f5e9;
+  color: #00A86B;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: bold;
+}

@@ -1,91 +1,44 @@
-import { useEffect } from "react";
-import { useAppStore, type User, type Vault } from "../stores/authStore";
+import { useAppStore } from "../stores/authStore";
 import { useTheme } from "./ThemeProvider";
 import AuthPage from "./AuthPage";
+import HealthScore from "./HealthScore";
 import VaultList from "./VaultList";
-import VaultView from "./VaultView";
+import BottomNav from "./BottomNav";
+import './Dashboard.css';
 
 const Dashboard = () => {
-  const {
-    user,
-    isLoading,
-    isUnlocked,
-    vaults,
-    currentVaultId,
-    createVault,
-    selectVault,
-    signOut,
-    hydrate,
-    updateActivity,
-    // Import all state updating functions needed
-    ...store
-  } = useAppStore();
-
+  const { user, isUnlocked, vaults } = useAppStore();
   const { theme, actualTheme, toggleTheme } = useTheme();
 
-  // Track activity for auto-lock and session management
-  useEffect(() => {
-    const handleActivity = () => updateActivity();
-
-    // Add event listeners for activity tracking
-    window.addEventListener("mousedown", handleActivity);
-    window.addEventListener("keydown", handleActivity);
-    window.addEventListener("scroll", handleActivity);
-
-    // Auto-lock timer - check every 30 seconds
-    const autoLockInterval = setInterval(() => {
-      // TODO: Implement proper auto-lock with lastActivity from store
-      // For now, simplified auto-lock after 5 minutes from component mount
-      if (isUnlocked) {
-        const fiveMinutes = 5 * 60 * 1000;
-        const timeSinceMount = Date.now() - Date.now(); // This is placeholder
-        // Auto-lock logic would go here
-      }
-    }, 30000); // Check every 30 seconds
-
-    return () => {
-      window.removeEventListener("mousedown", handleActivity);
-      window.removeEventListener("keydown", handleActivity);
-      window.removeEventListener("scroll", handleActivity);
-      clearInterval(autoLockInterval);
-    };
-  }, [updateActivity, isUnlocked]);
-
-  // Hydrate on mount
-  useEffect(() => {
-    hydrate();
-  }, [hydrate]);
-
-  const handleCreateVault = async () => {
-    const name = prompt("Enter vault name:");
-    if (name) {
-      try {
-        await createVault(name);
-      } catch (error) {
-        alert("Failed to create vault");
-      }
-    }
-  };
-
-  const handleSignOut = async () => {
-    await signOut();
-  };
-
-  // Show auth page if no user or not unlocked
   if (!user || !isUnlocked) {
     return <AuthPage />;
   }
 
-  const currentVault = vaults.find((v) => v.id === currentVaultId);
+  const summaryData = {
+    total: vaults.reduce((acc, vault) => acc + vault.items.length, 0),
+    compromised: vaults.reduce((acc, vault) => acc + vault.items.filter(i => i.tags?.includes('compromised')).length, 0),
+    weak: vaults.reduce((acc, vault) => acc + vault.items.filter(i => i.tags?.includes('weak')).length, 0),
+    reused: vaults.reduce((acc, vault) => acc + vault.items.filter(i => i.tags?.includes('reused')).length, 0),
+  };
+
+  const calculateHealthScore = () => {
+    let score = 100;
+    score -= summaryData.weak * 5;
+    score -= summaryData.compromised * 10;
+    return Math.max(0, score);
+  };
 
   return (
-    <div className="dashboard">
-      <header className="app-header">
-        <div className="header-left">
-          <h1>🔐 HushKey</h1>
+    <div className="dashboard-container">
+      <header className="dashboard-header">
+        <div className="user-info">
+          <img src={`https://i.pravatar.cc/40?u=${user.id}`} alt="User" className="user-avatar" />
+          <div>
+            <p className="welcome-back">Welcome back,</p>
+            <h1 className="user-name">{user.email}</h1>
+          </div>
         </div>
-        <div className="header-right">
-          <span>{user.email}</span>
+        <div className="header-actions">
           <button
             className="theme-toggle"
             onClick={toggleTheme}
@@ -94,52 +47,42 @@ const Dashboard = () => {
           >
             {actualTheme === "dark" ? "🌙" : "☀️"}
           </button>
-          <button onClick={handleSignOut}>Sign Out</button>
+          <button className="notifications-btn">
+            <span role="img" aria-label="notifications">🔔</span>
+          </button>
         </div>
       </header>
 
-      <div className="app-container">
-        <aside className="sidebar">
-          <div className="sidebar-header">
-            <h2>Vaults</h2>
-            <button className="add-vault-btn" onClick={handleCreateVault}>
-              <span>+</span> New
-            </button>
+      <main className="dashboard-content">
+        <HealthScore score={calculateHealthScore()} />
+        <div className="summary-cards">
+          <div className="card">
+            <h3>{summaryData.total}</h3>
+            <p>Total</p>
           </div>
-          <VaultList vaults={vaults} onVaultSelect={selectVault} />
-        </aside>
-
-        <main className="main-content">
-          {isLoading ? (
-            <div className="loading">
-              <div className="loading-spinner"></div>
-              <p>Loading your secure vault...</p>
-            </div>
-          ) : currentVault ? (
-            <VaultView vault={currentVault} />
-          ) : (
-            <div className="welcome">
-              <h2>Welcome to HushKey</h2>
-              <p>Your privacy-first password manager</p>
-              <div className="welcome-stats">
-                <div className="stat">
-                  <strong>{vaults.length}</strong>
-                  <span>Vaults</span>
-                </div>
-                <div className="stat">
-                  <strong>
-                    {vaults.reduce(
-                      (total, vault) => total + vault.items.length,
-                      0
-                    )}
-                  </strong>
-                  <span>Total Items</span>
-                </div>
-              </div>
-            </div>
-          )}
-        </main>
-      </div>
+          <div className="card">
+            <h3>{summaryData.compromised}</h3>
+            <p>Compromised</p>
+          </div>
+          <div className="card">
+            <h3>{summaryData.weak}</h3>
+            <p>Weak</p>
+          </div>
+          <div className="card">
+            <h3>{summaryData.reused}</h3>
+            <p>Reused</p>
+          </div>
+        </div>
+        <div className="top-vault">
+          <h2>Top Vault</h2>
+          <VaultList vaults={vaults.slice(0, 2)} onVaultSelect={(vaultId) => {
+            const { selectVault } = useAppStore.getState();
+            selectVault(vaultId);
+            // This is a bit of a hack, ideally we'd have a router
+            (document.querySelector('.nav-item[data-page="vault"]') as HTMLButtonElement)?.click();
+          }} simple />
+        </div>
+      </main>
     </div>
   );
 };
