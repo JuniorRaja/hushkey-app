@@ -67,3 +67,15 @@
   cursor: pointer;
   font-weight: bold;
 }
+
+.vault-menu-btn {
+  opacity: 0.6;
+  transition: opacity 0.2s;
+  color: #666;
+}
+
+.vault-item:hover .vault-menu-btn,
+.vault-menu-btn:hover {
+  opacity: 1;
+  color: #333;
+}

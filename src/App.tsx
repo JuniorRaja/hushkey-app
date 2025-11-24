@@ -106,7 +106,7 @@ function App() {
         username: formData.username.trim(),
         password: formData.password.trim(),
         url: formData.url.trim(),
-        type: 'Login',
+        type: 'login',
         tags: []
       });
       setShowAddModal(false);

@@ -73,6 +73,8 @@ export interface AuthActions {
 export interface VaultUIActions {
   // Vault management
   createVault: (name: string) => Promise<Vault>;
+  updateVault: (vaultId: string, name: string) => Promise<void>;
+  deleteVault: (vaultId: string) => Promise<void>;
   loadVaults: () => Promise<void>;
   selectVault: (vaultId: string) => void;
 
@@ -221,7 +223,7 @@ function authActions(set: any, get: () => AppStore): AuthActions {
         // Create profile if it doesn't exist
         salt = EncryptionService.generateSalt();
         await DatabaseService.saveUserProfile(userId, salt);
-        
+
         // Create device if it doesn't exist
         if (!get().deviceId) {
           const deviceId = EncryptionService.generateRandomString();
@@ -326,6 +328,25 @@ function vaultUIActions(set: any, get: () => AppStore): VaultUIActions {
       await get().loadVaults();
 
       return vault;
+    },
+
+    async updateVault(vaultId: string, name: string) {
+      const masterKey = get().masterKey!;
+
+      await DatabaseService.updateVault(vaultId, name, masterKey);
+
+      // Refresh vaults in state
+      await get().loadVaults();
+    },
+
+    async deleteVault(vaultId: string) {
+      await DatabaseService.deleteVault(vaultId);
+
+      // Remove from local state
+      set(state => ({
+        vaults: state.vaults.filter(v => v.id !== vaultId),
+        currentVaultId: state.currentVaultId === vaultId ? null : state.currentVaultId,
+      }));
     },
 
     async loadVaults() {
